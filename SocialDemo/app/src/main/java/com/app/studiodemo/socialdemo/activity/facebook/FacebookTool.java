@@ -358,7 +358,7 @@ public class FacebookTool {
                     Arrays.asList(PERMISSION));
         }
     }
-    
+
     public interface FBCallBack {
         void onSuccess(AccessToken token, String userid, String name,String image);
         void onSuccess();

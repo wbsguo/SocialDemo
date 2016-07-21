@@ -36,6 +36,12 @@
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!--分享图片用,没效果-->
+        <provider
+            android:authorities="com.facebook.app.FacebookContentProvider355198514515820"
+            android:name="com.facebook.FacebookContentProvider"
+            android:exported="true"
+            />
         <!-- facebook -->
     </application>
 
