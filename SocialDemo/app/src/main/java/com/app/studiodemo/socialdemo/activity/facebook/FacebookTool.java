@@ -60,6 +60,7 @@ public class FacebookTool {
 
     public static final int facebookLogin = 64206;
     public static final int facebookShare = 64207;
+    private static final String PERMISSION = "publish_actions";
     private CallbackManager callbackManager;
     //facebook头像
     public final static String facebookVatar = "http://graph.facebook.com/%s/picture?type=large";
@@ -272,8 +273,6 @@ public class FacebookTool {
         String facebookImag = String.format(facebookVatar, facebookId);
         return facebookImag;
     }
-    private static final String PERMISSION = "publish_actions";
-
     private boolean hasPublishPermission() {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
         return accessToken != null
@@ -285,8 +284,8 @@ public class FacebookTool {
     public void share_message(Activity activity) {
         ShareLinkContent linkContent = new ShareLinkContent.Builder()
                 .build();
-        if (ShareDialog.canShow(ShareLinkContent.class)) {
-            ShareDialog shareDialog = new ShareDialog(activity);
+        ShareDialog shareDialog = new ShareDialog(activity);
+        if (shareDialog.canShow(linkContent)) {
             shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
                 @Override
                 public void onSuccess(Sharer.Result result) {
@@ -328,10 +327,7 @@ public class FacebookTool {
         }
     }
 
-    public void share_phto(Activity activity,
-                           FacebookCallback<Sharer.Result> shareCallback, List<String> filePath) {
-        ShareDialog shareDialog = new ShareDialog(activity);
-        shareDialog.registerCallback(callbackManager, shareCallback);
+    public void share_phto(Activity activity,List<String> filePath) {
         ArrayList<SharePhoto> photos = new ArrayList<>();
         for (String path : filePath) {
             SharePhoto sharePhoto = new SharePhoto.Builder()
@@ -342,10 +338,42 @@ public class FacebookTool {
         SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder()
                 .setPhotos(photos)
                 .build();
-        if (ShareDialog.canShow(SharePhotoContent.class)) {
+        ShareDialog shareDialog = new ShareDialog(activity);
+        if (shareDialog.canShow(sharePhotoContent)) {
+            shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+                    Log.e(TAG,"图片分享成功:");
+                }
+
+                @Override
+                public void onCancel() {
+                    Log.e(TAG,"图片分享取消");
+                }
+
+                @Override
+                public void onError(FacebookException e) {
+                    Log.e(TAG,"图片分享异常:"+e.getMessage());
+                }
+            });
             shareDialog.show(sharePhotoContent);
         } else if (hasPublishPermission()) {
-            ShareApi.share(sharePhotoContent, shareCallback);
+            ShareApi.share(sharePhotoContent, new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+                    Log.e(TAG,"图片分享成功:");
+                }
+
+                @Override
+                public void onCancel() {
+                    Log.e(TAG,"图片分享取消");
+                }
+
+                @Override
+                public void onError(FacebookException e) {
+                    Log.e(TAG,"图片分享异常:"+e.getMessage());
+                }
+            });
         }else {
             //获取权限
             LoginManager.getInstance().logInWithPublishPermissions(activity,
