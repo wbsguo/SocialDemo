@@ -16,7 +16,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class TwitterTestActivity extends AppCompatActivity {
     public static final int TWITTER_OAUTH_REQUESTCODE = 100;
     private RelativeLayout twitter_relay;
     private TextView twitter_username;
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_twitter_test);
         twitter_relay = (RelativeLayout) findViewById(R.id.twitter_relay);
         twitter_username = (TextView) findViewById(R.id.twitter_username);
         twitter_phto = (ImageView) findViewById(R.id.twitter_phto);
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onSuccess() {
-                    TwitterUtil.getInstance(MainActivity.this).goToAuthorization(MainActivity.this, TWITTER_OAUTH_REQUESTCODE);
+                    TwitterUtil.getInstance(TwitterTestActivity.this).goToAuthorization(TwitterTestActivity.this, TWITTER_OAUTH_REQUESTCODE);
                 }
 
                 @Override
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess() {
                             // 获取displayName(昵称)
-                            TwitterUtil.getInstance(MainActivity.this).getScreenName(
+                            TwitterUtil.getInstance(TwitterTestActivity.this).getScreenName(
                                     new OnTwitterCallBackListener() {
 
                                         @Override
