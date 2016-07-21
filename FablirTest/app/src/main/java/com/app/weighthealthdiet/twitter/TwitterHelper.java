@@ -46,10 +46,12 @@ public class TwitterHelper {
         Fabric.with(context, new Twitter(authConfig));
     }
 
+    public int getRequestCode() {
+        return this.getTwitterAuthClient().getRequestCode();
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == this.getTwitterAuthClient().getRequestCode()) {
-            getTwitterAuthClient().onActivityResult(requestCode, resultCode, data);
-        }
+        getTwitterAuthClient().onActivityResult(requestCode, resultCode, data);
     }
 
     private TwitterAuthClient getTwitterAuthClient() {
@@ -97,10 +99,13 @@ public class TwitterHelper {
 
     public interface UserCallBack {
         void success(Result<User> result);
+
         void failure(TwitterException e);
     }
+
     /**
      * 分享
+     *
      * @param context
      * @param message
      */

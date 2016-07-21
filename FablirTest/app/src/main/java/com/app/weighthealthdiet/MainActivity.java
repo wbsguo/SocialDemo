@@ -33,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        TwitterHelper.getInstance().onActivityResult(requestCode, resultCode, data);
+        if(requestCode==TwitterHelper.getInstance().getRequestCode()){
+            TwitterHelper.getInstance().onActivityResult(requestCode, resultCode, data);
+        }
     }
     private void shareText() {
         TwitterHelper.getInstance().login(this, new Callback<TwitterSession>() {

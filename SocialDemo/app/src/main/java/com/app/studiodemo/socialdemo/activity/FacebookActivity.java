@@ -80,30 +80,14 @@ public class FacebookActivity extends Activity {
         FacebookTool.getInstance().init(this);
     }
     private void login(){
-        if(FacebookTool.getInstance().isAccessToken()){
-            FacebookTool.getInstance().login(this, new MyTagListenner() {
-                @Override
-                public void onTagComplete(String values, Object object) {
-                    if(values.equals(FacebookTool.success)){
-                        initView();
-                    }
+        FacebookTool.getInstance().login(this, new MyTagListenner() {
+            @Override
+            public void onTagComplete(String values, Object object) {
+                if(values.equals(FacebookTool.success)){
+                    initView();
                 }
-            });
-        }else{
-            FacebookTool.getInstance().loginWithReadPermissions(this, new MyTagListenner() {
-                @Override
-                public void onTagComplete(String values, Object object) {
-                    if (values.equals(FacebookTool.success)) {
-                        FacebookTool.getInstance().login(FacebookActivity.this, new MyTagListenner() {
-                            @Override
-                            public void onTagComplete(String values, Object object) {
-
-                            }
-                        });
-                    }
-                }
-            });
-        }
+            }
+        });
     }
     private void initView(){
         Profile profile = FacebookTool.getInstance().getUserProfile();

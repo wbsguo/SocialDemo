@@ -3,7 +3,6 @@ package com.app.studiodemo.socialdemo.activity.facebook;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,7 +16,6 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
-import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.share.ShareApi;
@@ -36,55 +34,35 @@ import java.util.Arrays;
 /**
  * Created by Administrator on 2016/2/18.
  */
-public class FacebookTool {
-    private static final String TAG="FacebookTool";
-    private static FacebookTool tool;
+public class FacebookTool2 {
+    private static FacebookTool2 tool;
 
-    private FacebookTool() {
+    private FacebookTool2() {
 
     }
 
-    public static FacebookTool getInstance() {
+    public static FacebookTool2 getInstance() {
         if (tool == null) {
-            tool = new FacebookTool();
+            tool = new FacebookTool2();
         }
         return tool;
     }
 
     public static final int facebookLogin = 64206;
     public static final int facebookShare = 64207;
+    public static final String noNet = "noNet";
+    public static final String faild = "faild";
+    public static final String success = "success";
     private CallbackManager callbackManager;
     //facebook头像
     public final static String facebookVatar = "http://graph.facebook.com/%s/picture?type=large";
-
-    /**
-     * 先必须初始化
-     * @param applicationContext
-     */
+    //	public final static String  facebookVatar = "http://graph.facebook.com/%s/picture?width=200&height=200";
     public void init(Context applicationContext) {
         FacebookSdk.sdkInitialize(applicationContext);
         callbackManager = CallbackManager.Factory.create();
     }
-    public void onResume(Context context) {
-        //长期运行的活动，应用变得活跃
-        AppEventsLogger.activateApp(context);
-    }
-    public void onPause(Context context) {
-        //结束活动
-        AppEventsLogger.deactivateApp(context);
-    }
 
-    /**
-     * onSaveInstanceState 可做保存用
-     * @param outState
-     */
-    public void onSaveInstanceState(Bundle outState) {
-        Profile profile = Profile.getCurrentProfile();
-        if(profile!=null){
-            outState.putString("FACEBOOKNAME", profile.getName());
-        }
-    }
-    private void getUserInfo(final Context context, final AccessToken accessToken,final FBCallBack listenner) {
+    private void getUserInfo(final Context context, final AccessToken accessToken,final MyTagListenner myTagListenner) {
         GraphRequest request = GraphRequest.newMeRequest(
                 accessToken,
                 new GraphRequest.GraphJSONObjectCallback() {
@@ -94,28 +72,51 @@ public class FacebookTool {
                             GraphResponse response) {
                         try {
                             String name = object.getString("name");
-                            String facebookImag = getFacebookImag(accessToken.getUserId());
-                            setProfile(context,accessToken.getUserId(),name,facebookImag);
-                            listenner.onSuccess(accessToken,accessToken.getUserId(),name,facebookImag);
+                            setUserName(context, name);
+                            setUserId(context, accessToken.getUserId());
+                            myTagListenner.onTagComplete(success,"");
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            listenner.onError("失败");
+                            myTagListenner.onTagComplete(faild,"");
                         }
                     }
                 });
         Bundle parameters = new Bundle();
         parameters.putString("fields", "name");//可以有一下多个字段名称
+//        {
+//                "id": "12345678",
+//                "birthday": "1/1/1950",
+//                "first_name": "Chris",
+//                "gender": "male",
+//                "last_name": "Colm",
+//                "link": "http://www.facebook.com/12345678",
+//                "location": {
+//                  "id": "110843418940484",
+//                  "name": "Seattle, Washington"
+//                  },
+//                "locale": "en_US",
+//                "name": "Chris Colm",
+//                "timezone": -8,
+//                "updated_time": "2010-01-01T16:40:43+0000",
+//                "verified": true
+//        }
         request.setParameters(parameters);
         request.executeAsync();
     }
 
-    /**
-     * 获取用户信息
-     * @return
-     */
     public Profile getUserProfile() {
         return Profile.getCurrentProfile();
     }
+
+    /**
+     * token是否过期
+     *
+     * @return
+     */
+    private boolean isExpired() {
+        return AccessToken.getCurrentAccessToken().isExpired();
+    }
+
     /**
      * activity中onActivityResult调用
      *
@@ -126,6 +127,7 @@ public class FacebookTool {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         callbackManager.onActivityResult(requestCode, resultCode, data);
     }
+
     public void logOut() {
         LoginManager.getInstance().logOut();
     }
@@ -133,123 +135,62 @@ public class FacebookTool {
     /**
      * @param activity 默认含有获取用户信息和用户好友信息
      */
-    private void loginWithReadPermissions(Activity activity,FBCallBack listenner) {
+    public void loginWithReadPermissions(Activity activity,MyTagListenner myTagListenner) {
         LoginManager.getInstance().logInWithReadPermissions(activity,
                 Arrays.asList("public_profile", "user_friends"));
-        listenner.onSuccess();
+        myTagListenner.onTagComplete(success, "");
     }
 
     public void loginWithPushPermissions(Activity activity,MyTagListenner myTagListenner) {
         LoginManager.getInstance().logInWithPublishPermissions(activity, Arrays.asList("public_profile"));
+        myTagListenner.onTagComplete(success,"");
     }
 
     public String getUserName(Context context) {
-        return context.getSharedPreferences("fbPre", Context.MODE_PRIVATE).getString("fbname", "");
+        return context.getSharedPreferences("fbname", Context.MODE_PRIVATE).getString("fbname", "");
     }
+
+    public void setUserName(Context context, String name) {
+        context.getSharedPreferences("fbname", Context.MODE_PRIVATE).edit().putString("fbname", name).commit();
+    }
+
     public String getUserId(Context context) {
-        return context.getSharedPreferences("fbPre", Context.MODE_PRIVATE).getString("fbUserId", "");
+        return context.getSharedPreferences("fbUserId", Context.MODE_PRIVATE).getString("fbUserId", "");
     }
-    public void setProfile(Context context,String userId,String userName,String userImage){
-        Log.e(TAG,"userId:"+userId+"userName:"+userName+"userImage:"+userImage);
-        SharedPreferences preferences=context.getSharedPreferences("fbPre", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor=preferences.edit();
-        editor.putString("fbUserId", userId);
-        editor.putString("fbname", userName);
-        editor.putString("fbUserImage", userImage);
-        editor.commit();
+
+    public void setUserId(Context context, String userId) {
+        context.getSharedPreferences("fbUserId", Context.MODE_PRIVATE).edit().putString("fbUserId", userId).commit();
     }
-    public String getUserImage(Context context) {
-        return context.getSharedPreferences("fbPre", Context.MODE_PRIVATE).getString("fbUserImage", "");
-    }
-    private boolean isAccessToken(){
+    public boolean isAccessToken(){
         if(AccessToken.getCurrentAccessToken()==null){
             return false;
         }else{
             return true;
         }
     }
-    /**
-     * token是否过期
-     *
-     * @return
-     */
-    private boolean isExpired() {
-        return AccessToken.getCurrentAccessToken().isExpired();
-    }
-    public void login(final Activity activity,final FBCallBack listenner){
-        if(isAccessToken()){
-            if (!isExpired()) {
-                FbLogin(activity,listenner);
-            } else { // 失效，重新授权
-                loginWithReadPermissions(activity, new FBCallBack() {
-                    @Override
-                    public void onSuccess(AccessToken token, String userid, String name, String image) {
-
-                    }
-
-                    @Override
-                    public void onSuccess() {
-                        FbLogin(activity,listenner);
-                    }
-
-                    @Override
-                    public void onError(String errorInfo) {
-
-                    }
-                });
-            }
-        }else{
-            loginWithReadPermissions(activity, new FBCallBack() {
-                @Override
-                public void onSuccess(AccessToken token, String userid, String name, String image) {
-
-                }
-
-                @Override
-                public void onSuccess() {
-                    FbLogin(activity,listenner);
-                }
-
-                @Override
-                public void onError(String errorInfo) {
-
-                }
-            });
-        }
-    }
-    private void FbLogin(final Context context,final FBCallBack listenner){
+    public void login(final Context context,final MyTagListenner myTagListenner){
         LoginManager.getInstance().registerCallback(callbackManager,
                 new FacebookCallback<LoginResult>() {
                     @Override
                     public void onSuccess(LoginResult loginResult) {
+                        Log.e("", "登录成功");
                         AccessToken accessToken = loginResult.getAccessToken();
-                        Profile profile=FacebookTool.getInstance().getUserProfile();
-                        if(profile!=null){
-                            String facebookImag = getFacebookImag(accessToken.getUserId());
-                            setProfile(context,accessToken.getUserId(),profile.getName(),facebookImag);
-                            listenner.onSuccess(accessToken,accessToken.getUserId(),profile.getName(),facebookImag);
-                        }else{
-                            getUserInfo(context, accessToken,listenner);
-                        }
+                        getUserInfo(context, accessToken,myTagListenner);
                     }
 
                     @Override
                     public void onCancel() {
-                        listenner.onError("失败");
+                        Log.e("", "取消登录");
+                        myTagListenner.onTagComplete(faild,"");
                     }
 
                     @Override
                     public void onError(FacebookException exception) {
-                        listenner.onError(exception.getMessage());
+                        Log.e("", "登录失败:" + exception.getMessage());
+                        myTagListenner.onTagComplete(faild,exception.getMessage());
                     }
                 });
     }
-
-    /**
-     * 获取头像
-     * @param facebookId
-     * @return
-     */
     public String getFacebookImag(String facebookId) {
         String facebookImag = String.format(facebookVatar, facebookId);
         return facebookImag;
@@ -266,6 +207,10 @@ public class FacebookTool {
         if (accessToken != null || canPresentShareDialog) {
             Profile profile = Profile.getCurrentProfile();
             ShareLinkContent linkContent = new ShareLinkContent.Builder()
+//			.setContentTitle("Hello Facebook")
+                    // .setContentDescription(
+                    // "The 'Hello Facebook' sample  showcases simple Facebook integration")
+                    // .setContentUrl(Uri.parse("http://developers.facebook.com/docs/android"))
                     .build();
             if (canPresentShareDialog) {
                 shareDialog.show(linkContent);
@@ -311,10 +256,5 @@ public class FacebookTool {
                         Arrays.asList(PERMISSION));
             }
         }
-    }
-    public interface FBCallBack {
-        void onSuccess(AccessToken token, String userid, String name,String image);
-        void onSuccess();
-        void onError(String errorInfo);
     }
 }
