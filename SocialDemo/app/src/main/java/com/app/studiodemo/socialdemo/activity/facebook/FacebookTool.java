@@ -4,8 +4,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 
 import com.app.studiodemo.socialdemo.activity.listenner.MyTagListenner;
@@ -30,8 +35,10 @@ import com.facebook.share.widget.ShareDialog;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Administrator on 2016/2/18.
@@ -254,27 +261,6 @@ public class FacebookTool {
         String facebookImag = String.format(facebookVatar, facebookId);
         return facebookImag;
     }
-    /**
-     * 分享文字
-     */
-    public void share_message(Activity activity,
-                              FacebookCallback<Sharer.Result> shareCallback) {
-        ShareDialog shareDialog = new ShareDialog(activity);
-        shareDialog.registerCallback(callbackManager, shareCallback);
-        boolean canPresentShareDialog = ShareDialog.canShow(ShareLinkContent.class);
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        if (accessToken != null || canPresentShareDialog) {
-            Profile profile = Profile.getCurrentProfile();
-            ShareLinkContent linkContent = new ShareLinkContent.Builder()
-                    .build();
-            if (canPresentShareDialog) {
-                shareDialog.show(linkContent);
-            } else if (profile != null && hasPublishPermission()) {
-                ShareApi.share(linkContent, shareCallback);
-            }
-        }
-    }
-
     private static final String PERMISSION = "publish_actions";
 
     private boolean hasPublishPermission() {
@@ -282,39 +268,117 @@ public class FacebookTool {
         return accessToken != null
                 && accessToken.getPermissions().contains(PERMISSION);
     }
-
     /**
-     * @param activity
-     * @param shareCallback
-     * @param image         默认图片资源
+     * 分享文字
      */
-    public void share_phto(Activity activity,
-                           FacebookCallback<Sharer.Result> shareCallback, Bitmap image) {
+    public void share_message(Activity activity,
+                              FacebookCallback<Sharer.Result> shareCallback) {
         ShareDialog shareDialog = new ShareDialog(activity);
         shareDialog.registerCallback(callbackManager, shareCallback);
-        boolean canPresentShareDialog = ShareDialog.canShow(ShareLinkContent.class);
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        if (accessToken != null || canPresentShareDialog) {
-            SharePhoto sharePhoto = new SharePhoto.Builder().setBitmap(image)
-                    .build();
-            ArrayList<SharePhoto> photos = new ArrayList<>();
-            photos.add(sharePhoto);
-            SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder()
-                    .setPhotos(photos).build();
-            if (canPresentShareDialog) {
-                shareDialog.show(sharePhotoContent);
-            } else if (hasPublishPermission()) {
-                ShareApi.share(sharePhotoContent, shareCallback);
-            } else {
-                //获取权限
-                LoginManager.getInstance().logInWithPublishPermissions(activity,
-                        Arrays.asList(PERMISSION));
-            }
+        ShareLinkContent linkContent = new ShareLinkContent.Builder()
+                .build();
+        if (ShareDialog.canShow(ShareLinkContent.class)) {
+            shareDialog.show(linkContent);
+        } else if (hasPublishPermission()) {
+            ShareApi.share(linkContent, shareCallback);
+        } else {
+            //获取权限
+            LoginManager.getInstance().logInWithPublishPermissions(activity,
+                    Arrays.asList(PERMISSION));
         }
     }
+
+    public void share_phto(Activity activity,
+                           FacebookCallback<Sharer.Result> shareCallback, List<String> filePath) {
+        ShareDialog shareDialog = new ShareDialog(activity);
+        shareDialog.registerCallback(callbackManager, shareCallback);
+        ArrayList<SharePhoto> photos = new ArrayList<>();
+        for (String path : filePath) {
+            SharePhoto sharePhoto = new SharePhoto.Builder()
+                    .setBitmap(BitmapFactory.decodeFile(path))
+                    .build();
+            photos.add(sharePhoto);
+        }
+        SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder()
+                .setPhotos(photos)
+                .build();
+        if (ShareDialog.canShow(SharePhotoContent.class)) {
+            shareDialog.show(sharePhotoContent);
+        } else if (hasPublishPermission()) {
+            ShareApi.share(sharePhotoContent, shareCallback);
+        }else {
+            //获取权限
+            LoginManager.getInstance().logInWithPublishPermissions(activity,
+                    Arrays.asList(PERMISSION));
+        }
+    }
+
+    public void share_phto(Activity activity,
+                           FacebookCallback<Sharer.Result> shareCallback, Bitmap bitmap) {
+        ShareDialog shareDialog = new ShareDialog(activity);
+        shareDialog.registerCallback(callbackManager, shareCallback);
+        ArrayList<SharePhoto> photos = new ArrayList<>();
+        SharePhoto sharePhoto = new SharePhoto.Builder()
+                .setBitmap(bitmap)
+                .build();
+        photos.add(sharePhoto);
+        SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder()
+                .setPhotos(photos)
+                .build();
+        if (ShareDialog.canShow(SharePhotoContent.class)) {
+            shareDialog.show(sharePhotoContent);
+        } else if (hasPublishPermission()) {
+            ShareApi.share(sharePhotoContent, shareCallback);
+        }else {
+            //获取权限
+            LoginManager.getInstance().logInWithPublishPermissions(activity,
+                    Arrays.asList(PERMISSION));
+        }
+    }
+
+    public void share_phto(Activity activity,
+                           FacebookCallback<Sharer.Result> shareCallback,String imageUrl) {
+        ShareDialog shareDialog = new ShareDialog(activity);
+        shareDialog.registerCallback(callbackManager, shareCallback);
+        ArrayList<SharePhoto> photos = new ArrayList<>();
+        SharePhoto sharePhoto = new SharePhoto.Builder()
+                .setImageUrl(Uri.parse(imageUrl))
+                .build();
+        photos.add(sharePhoto);
+        SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder()
+                .setPhotos(photos)
+                .build();
+        if (ShareDialog.canShow(SharePhotoContent.class)) {
+            shareDialog.show(sharePhotoContent);
+        } else if (hasPublishPermission()) {
+            ShareApi.share(sharePhotoContent, shareCallback);
+        }else {
+            //获取权限
+            LoginManager.getInstance().logInWithPublishPermissions(activity,
+                    Arrays.asList(PERMISSION));
+        }
+    }
+    
     public interface FBCallBack {
         void onSuccess(AccessToken token, String userid, String name,String image);
         void onSuccess();
         void onError(String errorInfo);
+    }
+
+    /**
+     * 获取KeyHash
+     * @param context
+     */
+    public void getFBHashKey(Context context) {
+        try {
+            PackageInfo info = context.getPackageManager().getPackageInfo("包名", PackageManager.GET_SIGNATURES);
+            for (android.content.pm.Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String sign = Base64.encodeToString(md.digest(), Base64.DEFAULT);
+                Log.e("MY KEY HASH", "sign:" + sign);
+            }
+        } catch (Exception e) {
+        }
     }
 }
