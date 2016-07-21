@@ -133,8 +133,12 @@ public class FacebookTool {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         callbackManager.onActivityResult(requestCode, resultCode, data);
     }
-    public void logOut() {
+    /**
+     * 退出登录
+     */
+    public void logOut(Context context) {
         LoginManager.getInstance().logOut();
+        setProfile(context, null, "", "");
     }
 
     /**
@@ -183,29 +187,36 @@ public class FacebookTool {
     private boolean isExpired() {
         return AccessToken.getCurrentAccessToken().isExpired();
     }
-    public void login(final Activity activity,final FBCallBack listenner){
-        if(isAccessToken()){
-            if (!isExpired()) {
-                FbLogin(activity,listenner);
-            } else { // 失效，重新授权
-                loginWithReadPermissions(activity, new FBCallBack() {
-                    @Override
-                    public void onSuccess(AccessToken token, String userid, String name, String image) {
+    public void login(final Activity activity, final FBCallBack listenner) {
+        if (isAccessToken()) {
+            Profile profile=getUserProfile();
+            if(profile!=null){
+                String facebookImag = getFacebookImag(profile.getId());
+                setProfile(activity, profile.getId(), profile.getName(), facebookImag);
+                listenner.onSuccess(AccessToken.getCurrentAccessToken(), profile.getId(), profile.getName(), facebookImag);
+            }else{
+                if (!isExpired()) {
+                    FbLogin(activity, listenner);
+                } else { // 失效，重新授权
+                    loginWithReadPermissions(activity, new FBCallBack() {
+                        @Override
+                        public void onSuccess(AccessToken token, String userid, String name, String image) {
 
-                    }
+                        }
 
-                    @Override
-                    public void onSuccess() {
-                        FbLogin(activity,listenner);
-                    }
+                        @Override
+                        public void onSuccess() {
+                            FbLogin(activity, listenner);
+                        }
 
-                    @Override
-                    public void onError(String errorInfo) {
+                        @Override
+                        public void onError(String errorInfo) {
 
-                    }
-                });
+                        }
+                    });
+                }
             }
-        }else{
+        } else {
             loginWithReadPermissions(activity, new FBCallBack() {
                 @Override
                 public void onSuccess(AccessToken token, String userid, String name, String image) {
@@ -214,7 +225,7 @@ public class FacebookTool {
 
                 @Override
                 public void onSuccess() {
-                    FbLogin(activity,listenner);
+                    FbLogin(activity, listenner);
                 }
 
                 @Override
@@ -271,16 +282,45 @@ public class FacebookTool {
     /**
      * 分享文字
      */
-    public void share_message(Activity activity,
-                              FacebookCallback<Sharer.Result> shareCallback) {
-        ShareDialog shareDialog = new ShareDialog(activity);
-        shareDialog.registerCallback(callbackManager, shareCallback);
+    public void share_message(Activity activity) {
         ShareLinkContent linkContent = new ShareLinkContent.Builder()
                 .build();
         if (ShareDialog.canShow(ShareLinkContent.class)) {
+            ShareDialog shareDialog = new ShareDialog(activity);
+            shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+                    Log.e(TAG,"分享文字成功:");
+                }
+
+                @Override
+                public void onCancel() {
+                    Log.e(TAG,"分享文字取消");
+                }
+
+                @Override
+                public void onError(FacebookException e) {
+                    Log.e(TAG,"分享文字异常:"+e.getMessage());
+                }
+            });
             shareDialog.show(linkContent);
         } else if (hasPublishPermission()) {
-            ShareApi.share(linkContent, shareCallback);
+            ShareApi.share(linkContent, new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+
+                }
+
+                @Override
+                public void onCancel() {
+
+                }
+
+                @Override
+                public void onError(FacebookException error) {
+
+                }
+            });
         } else {
             //获取权限
             LoginManager.getInstance().logInWithPublishPermissions(activity,
