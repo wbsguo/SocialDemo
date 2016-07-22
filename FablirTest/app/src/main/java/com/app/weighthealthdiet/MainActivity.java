@@ -16,17 +16,30 @@ import com.twitter.sdk.android.core.models.User;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG="MainActivity";
-    private Button login;
+    private Button login,share_message,share_image;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         login=(Button)findViewById(R.id.login);
+        share_message=(Button)findViewById(R.id.share_message);
+        share_image=(Button)findViewById(R.id.share_image);
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                shareText();
+                login();
+            }
+        });
+        share_message.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 shareMessage();
+            }
+        });
+        share_image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                shareImage();
             }
         });
     }
@@ -37,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             TwitterHelper.getInstance().onActivityResult(requestCode, resultCode, data);
         }
     }
-    private void shareText() {
+    private void login(){
         TwitterHelper.getInstance().login(this, new Callback<TwitterSession>() {
             @Override
             public void success(Result<TwitterSession> result) {
@@ -65,5 +78,9 @@ public class MainActivity extends AppCompatActivity {
     }
     private void shareMessage(){
         TwitterHelper.getInstance().sendMessageByTwitter(this,"women");
+    }
+    private void shareImage(){
+        String path="/storage/emulated/0/GoStore/icon/-1637101839.jpg";
+        TwitterHelper.getInstance().shareImageUrl(this,"文字",path);
     }
 }

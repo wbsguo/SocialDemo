@@ -14,6 +14,7 @@ import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterAuthClient;
 import com.twitter.sdk.android.core.models.User;
+import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -104,7 +105,7 @@ public class TwitterHelper {
     }
 
     /**
-     * 分享
+     * 网页分享
      *
      * @param context
      * @param message
@@ -115,5 +116,20 @@ public class TwitterHelper {
         Uri content_url = Uri.parse("https://twitter.com/intent/tweet?text=" + message);
         intent.setData(content_url);
         context.startActivity(intent);
+    }
+
+    /**
+     * 客户端分享
+     *
+     * @param context
+     * @param imageUrl 本地图片路径测试通过,网址未通过 Uri.fromFile(file)
+     */
+    public void shareImageUrl(Context context, String textString, String imageUrl) {
+        TweetComposer.Builder builder = new TweetComposer.Builder(context);
+        builder.text(textString);//文字
+        builder.image(Uri.parse(imageUrl));
+//            URL url=new URL(imageUrl);
+//            builder.url(url); // 网址
+        builder.show();
     }
 }
