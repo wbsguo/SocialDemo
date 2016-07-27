@@ -95,18 +95,22 @@ public class FacebookTool {
                             if(object!=null){
                                 Log.e(TAG,"用户信息:"+object.toString());
                                 String name = object.getString("name");
-                                String email = object.getString("email");
-                                String gender = object.getString("gender");
+                                User user=new User();
+                                if(object.has("email")){
+                                    String email = object.getString("email");
+                                    user.email=email;
+                                }
+                                if(object.has("gender")){
+                                    String gender = object.getString("gender");
+                                    user.gender=gender;
+                                }
                                 JSONObject pictureObject=object.getJSONObject("picture");
                                 JSONObject dataObject=pictureObject.getJSONObject("data");
                                 String url=dataObject.getString("url");
-                                User user=new User();
                                 user.userid=accessToken.getUserId();
                                 user.name=name;
-                                user.email=email;
                                 user.image=url;
                                 user.token=accessToken;
-                                user.gender=gender;
                                 setProfile(context,user);
                                 listenner.onSuccess(user);
                             }
