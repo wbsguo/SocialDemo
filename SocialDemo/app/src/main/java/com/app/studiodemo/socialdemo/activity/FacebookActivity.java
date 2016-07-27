@@ -15,7 +15,6 @@ import android.widget.TextView;
 
 import com.app.studiodemo.socialdemo.R;
 import com.app.studiodemo.socialdemo.activity.facebook.FacebookTool;
-import com.app.studiodemo.socialdemo.activity.listenner.MyTagListenner;
 import com.bumptech.glide.Glide;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -53,7 +52,7 @@ public class FacebookActivity extends Activity {
         login_out.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FacebookTool.getInstance().logOut();
+//                FacebookTool.getInstance().logOut();
                 clearDatas();
             }
         });
@@ -71,8 +70,8 @@ public class FacebookActivity extends Activity {
         });
     }
     private void clearDatas(){
-        FacebookTool.getInstance().setUserName(this,"");
-        FacebookTool.getInstance().setUserId(this,"");
+//        FacebookTool.getInstance().setUserName(this,"");
+//        FacebookTool.getInstance().setUserId(this,"");
         fbName.setText("");
         vatar_image.setImageResource(R.mipmap.ic_launcher);
     }
@@ -80,12 +79,20 @@ public class FacebookActivity extends Activity {
         FacebookTool.getInstance().init(this);
     }
     private void login(){
-        FacebookTool.getInstance().login(this, new MyTagListenner() {
+        FacebookTool.getInstance().login(this, new FacebookTool.FBCallBack() {
             @Override
-            public void onTagComplete(String values, Object object) {
-                if(values.equals(FacebookTool.success)){
-                    initView();
-                }
+            public void onSuccess(FacebookTool.User user) {
+
+            }
+
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onError(String errorInfo) {
+
             }
         });
     }
@@ -105,7 +112,7 @@ public class FacebookActivity extends Activity {
         }
     }
     private void share_message() {
-        FacebookTool.getInstance().share_message(this, shareCallback);
+//        FacebookTool.getInstance().share_message(this, shareCallback);
     }
     private void share_phto() {
         Bitmap image = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
